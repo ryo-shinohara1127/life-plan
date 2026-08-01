@@ -1,29 +1,18 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-
-type HealthStatus = 'checking' | 'ok' | 'error'
+import { Route, Routes } from 'react-router-dom'
+import { Layout } from './components/Layout'
+import { Dashboard } from './pages/Dashboard'
+import { Philosophy } from './pages/Philosophy'
+import { Roadmap } from './pages/Roadmap'
 
 function App() {
-  const [status, setStatus] = useState<HealthStatus>('checking')
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then(() => setStatus('ok'))
-      .catch(() => setStatus('error'))
-  }, [])
-
   return (
-    <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>人生設計図</h1>
-      <p>フロントエンド：起動しています</p>
-      <p>
-        バックエンド接続：
-        {status === 'checking' && '確認中...'}
-        {status === 'ok' && '✅ 接続成功'}
-        {status === 'error' && '❌ 接続失敗（backendが起動しているか確認してください）'}
-      </p>
-    </main>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="philosophy" element={<Philosophy />} />
+        <Route path="roadmap" element={<Roadmap />} />
+      </Route>
+    </Routes>
   )
 }
 

@@ -1,5 +1,11 @@
 import cors from 'cors'
+import 'dotenv/config'
 import express from 'express'
+import { pool } from './db.js'
+import { categoriesRouter } from './routes/categories.js'
+import { goalsRouter } from './routes/goals.js'
+import { lifePhilosophyRouter } from './routes/lifePhilosophy.js'
+import { visionsRouter } from './routes/visions.js'
 
 const app = express()
 const port = process.env.PORT ?? 3001
@@ -10,6 +16,20 @@ app.use(express.json())
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
+
+app.get('/api/db-health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1')
+    res.json({ status: 'ok' })
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: (err as Error).message })
+  }
+})
+
+app.use('/api/life-philosophy', lifePhilosophyRouter)
+app.use('/api/visions', visionsRouter)
+app.use('/api/goals', goalsRouter)
+app.use('/api/categories', categoriesRouter)
 
 app.listen(port, () => {
   console.log(`backend listening on http://localhost:${port}`)
