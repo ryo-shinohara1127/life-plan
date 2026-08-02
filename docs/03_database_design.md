@@ -21,7 +21,10 @@ tasks (今日のタスク) ──── N:1 ──── categories
    ▼
 google_calendar_links (カレンダーイベントとの紐付け)
 
-reflections (毎日の振り返り) ── 1:N ── ai_suggestions (AI改善提案)
+reflections (毎日の振り返り) ── 1:1 ── ai_suggestions (振り返り分析結果)
+                                              │ 1:N
+                                              ▼
+                                    ai_calendar_proposals (カレンダー変更案)
 ```
 
 ## 2. テーブル定義
@@ -132,28 +135,56 @@ reflections (毎日の振り返り) ── 1:N ── ai_suggestions (AI改善�
 | sleep_hours | numeric | 睡眠時間 |
 | created_at | timestamptz | |
 
-### 2.8 `ai_suggestions`（AIによる改善提案）
+### 2.8 `ai_suggestions`（AIによる振り返り分析結果）
+
+1回の振り返りに対して、AIが生成する分析結果をまとめて1件保存する
+（要約・課題・原因の仮説・改善案・継続すべきこと）。カレンダーの変更案だけは、
+1件ずつ個別に承認/却下したいため、別テーブル`ai_calendar_proposals`に分離する（2.9参照）。
 
 | カラム | 型 | 説明 |
 |---|---|---|
 | id | uuid (PK) | |
-| reflection_id | uuid (FK → reflections.id) | どの振り返りから生成されたか |
-| suggestion_content | text | AIが生成した提案本文 |
-| suggested_goal_changes | jsonb (nullable) | 目標やタスクへの具体的な変更提案（構造化） |
-| status | text | `proposed` / `accepted` / `rejected` |
+| reflection_id | uuid (FK → reflections.id, unique) | どの振り返りから生成されたか（1振り返り1件） |
+| summary | text | 今日の要約 |
+| issues | text | 検出された課題 |
+| hypothesis | text | 原因の仮説 |
+| improvements | jsonb | 明日の改善案（最大3件の配列） |
+| continue_items | text | 継続すべきこと |
+| ai_provider | text | 生成に使ったAI（例: `claude`） |
 | created_at | timestamptz | |
-| reviewed_at | timestamptz (nullable) | |
 
-> 設計意図：`suggested_goal_changes`をjsonbにしておくことで、「翌日のタスクをこう変える」
-> 「週目標をこう調整する」といった多様な提案パターンをテーブル構造を変えずに表現できる。
-> MVPでは人が見て手動反映する運用とし、精度が上がってきたら自動反映（ロードマップの自動更新）
-> に拡張する。
+> 設計意図：要約・課題・改善案などはユーザーが「承認/却下」する対象ではなく、あくまで
+> 読んで参考にする情報のため、ステータス管理は不要と判断し、テキスト＋jsonbのシンプルな
+> 構成にしている。`improvements`をjsonbにしているのは、3件までという可変長のリストを
+> 1カラムで表現するため。
+
+### 2.9 `ai_calendar_proposals`（AIによるカレンダー変更案）
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | uuid (PK) | |
+| ai_suggestion_id | uuid (FK → ai_suggestions.id) | どの振り返り分析から生まれた提案か |
+| description | text | 提案内容の説明（人が読む用） |
+| proposed_change | jsonb | 変更内容の構造化データ（対象イベント・日時・種別など） |
+| reason | text | AIがこの変更を提案する理由 |
+| status | text | `proposed` / `approved` / `rejected` |
+| reviewed_at | timestamptz (nullable) | ユーザーが承認/却下した日時 |
+| applied_at | timestamptz (nullable) | 実際にGoogleカレンダーへ反映した日時 |
+| created_at | timestamptz | |
+
+> 設計意図：カレンダー変更は「ユーザーが承認した分だけ実際に反映される」という
+> 要件があるため、提案（proposed）→承認/却下（reviewed_at）→実際の反映（applied_at）を
+> 別々のタイミングの出来事として記録できるようにしている。`status`が`rejected`のまま
+> 残る、という要件（却下した結果も記録する）もこの設計で満たせる。AIはこのテーブルに
+> レコードを作るところまでしか行わず、`google_calendar_links`や実際のカレンダーへの
+> 書き込みは、ユーザーが承認した後にバックエンドが行う。
 
 ## 3. インデックス方針（初期案）
 
 - `tasks(date)`：今日のタスク一覧表示で頻繁に使うため
 - `reflections(date)`：日付検索・履歴表示のため
 - `goals(parent_goal_id)`：階層をたどるツリー表示のため
+- `ai_calendar_proposals(ai_suggestion_id)`：振り返り単位で提案一覧を出すため
 
 ## 4. 今後の拡張候補（MVP外）
 
