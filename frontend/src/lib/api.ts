@@ -65,6 +65,17 @@ export type Task = {
   is_routine: boolean
 }
 
+export type GoogleConnectionStatus =
+  | { connected: false }
+  | { connected: true; calendarId: string; updatedAt: string }
+
+export type CalendarEvent = {
+  id: string
+  title: string
+  start: string | null
+  end: string | null
+}
+
 export const api = {
   getPhilosophyHistory: () => request<LifePhilosophy[]>('/life-philosophy'),
   createPhilosophy: (content: string) =>
@@ -109,6 +120,11 @@ export const api = {
   deleteTask: (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
   generateRoutine: (date: string) =>
     request<Task[]>('/tasks/generate-routine', { method: 'POST', body: JSON.stringify({ date }) }),
+
+  getGoogleStatus: () => request<GoogleConnectionStatus>('/auth/google/status'),
+  disconnectGoogle: () => request<void>('/auth/google/disconnect', { method: 'POST' }),
+
+  getCalendarEvents: (date: string) => request<CalendarEvent[]>(`/calendar/events?date=${date}`),
 }
 
 export function todayISODate(): string {

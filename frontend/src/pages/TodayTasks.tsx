@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, todayISODate, type Category, type Task, type TaskStatus } from '../lib/api'
+import { api, todayISODate, type Category, type CalendarEvent, type Task, type TaskStatus } from '../lib/api'
 
 const statusLabel: Record<TaskStatus, string> = {
   not_started: '未着手',
@@ -16,6 +16,7 @@ export function TodayTasks() {
   const [newTitle, setNewTitle] = useState('')
   const [newStart, setNewStart] = useState('')
   const [newEnd, setNewEnd] = useState('')
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[] | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -23,6 +24,14 @@ export function TodayTasks() {
       setTasks(t)
       setCategories(c)
       setLoading(false)
+    })
+
+    api.getGoogleStatus().then((status) => {
+      if (status.connected) {
+        api.getCalendarEvents(date).then(setCalendarEvents)
+      } else {
+        setCalendarEvents(null)
+      }
     })
   }
 
@@ -82,6 +91,24 @@ export function TodayTasks() {
         <button onClick={generateRoutine} style={{ marginBottom: '1rem' }}>
           今日のルーティンを生成する
         </button>
+      )}
+
+      {calendarEvents && (
+        <div style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
+          <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>Googleカレンダーの予定</h3>
+          {calendarEvents.length === 0 ? (
+            <p style={{ color: '#888', fontSize: '0.85rem' }}>今日の予定はありません。</p>
+          ) : (
+            <ul style={{ fontSize: '0.85rem', color: '#ccc' }}>
+              {calendarEvents.map((event) => (
+                <li key={event.id}>
+                  {event.start && new Date(event.start).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}{' '}
+                  {event.title}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       <ul style={{ listStyle: 'none', padding: 0 }}>

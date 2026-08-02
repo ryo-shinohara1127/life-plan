@@ -105,6 +105,24 @@ reflections (毎日の振り返り) ── 1:1 ── ai_suggestions (振り返�
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
+### 2.6a `google_calendar_tokens`（Google OAuthトークン）
+
+本人専用アプリのため1行のみを想定（複数ユーザー対応はスコープ外）。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| id | uuid (PK) | |
+| access_token | text | Google APIを呼ぶための短期トークン |
+| refresh_token | text | access_tokenが切れたときに再取得するためのトークン |
+| expiry | timestamptz | access_tokenの有効期限 |
+| calendar_id | text | 同期対象のカレンダーID（既定は`primary`） |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+> 設計意図：トークンは`.env`のような静的な設定ファイルではなくDBに保存する。理由は、
+> OAuthのaccess_tokenは短時間（通常1時間程度）で失効し、refresh_tokenを使って
+> バックエンドが自動的に更新し続ける必要があるため、実行時に書き換え可能なDBが適している。
+
 ### 2.6 `google_calendar_links`（タスクとカレンダーイベントの紐付け）
 
 | カラム | 型 | 説明 |

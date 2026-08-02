@@ -2,6 +2,8 @@ import cors from 'cors'
 import 'dotenv/config'
 import express from 'express'
 import { pool } from './db.js'
+import { authRouter } from './routes/auth.js'
+import { calendarRouter } from './routes/calendar.js'
 import { categoriesRouter } from './routes/categories.js'
 import { goalsRouter } from './routes/goals.js'
 import { lifePhilosophyRouter } from './routes/lifePhilosophy.js'
@@ -32,6 +34,8 @@ app.use('/api/visions', visionsRouter)
 app.use('/api/goals', goalsRouter)
 app.use('/api/categories', categoriesRouter)
 app.use('/api/tasks', tasksRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/calendar', calendarRouter)
 
 app.listen(port, () => {
   console.log(`backend listening on http://localhost:${port}`)
