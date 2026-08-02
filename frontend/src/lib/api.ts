@@ -50,6 +50,21 @@ export type Goal = {
   status: string
 }
 
+export type TaskStatus = 'not_started' | 'in_progress' | 'done' | 'skipped'
+
+export type Task = {
+  id: string
+  goal_id: string | null
+  category_id: string | null
+  title: string
+  description: string | null
+  date: string
+  planned_start_time: string | null
+  planned_end_time: string | null
+  status: TaskStatus
+  is_routine: boolean
+}
+
 export const api = {
   getPhilosophyHistory: () => request<LifePhilosophy[]>('/life-philosophy'),
   createPhilosophy: (content: string) =>
@@ -78,4 +93,28 @@ export const api = {
   updateGoal: (id: string, input: Partial<Pick<Goal, 'title' | 'description' | 'status'>>) =>
     request<Goal>(`/goals/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
   deleteGoal: (id: string) => request<void>(`/goals/${id}`, { method: 'DELETE' }),
+
+  getTasks: (date: string) => request<Task[]>(`/tasks?date=${date}`),
+  createTask: (input: {
+    title: string
+    date: string
+    category_id?: string
+    goal_id?: string
+    description?: string
+    planned_start_time?: string
+    planned_end_time?: string
+  }) => request<Task>('/tasks', { method: 'POST', body: JSON.stringify(input) }),
+  updateTaskStatus: (id: string, status: TaskStatus) =>
+    request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  deleteTask: (id: string) => request<void>(`/tasks/${id}`, { method: 'DELETE' }),
+  generateRoutine: (date: string) =>
+    request<Task[]>('/tasks/generate-routine', { method: 'POST', body: JSON.stringify({ date }) }),
+}
+
+export function todayISODate(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }

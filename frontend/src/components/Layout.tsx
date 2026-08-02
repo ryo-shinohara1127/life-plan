@@ -4,6 +4,7 @@ const navItems = [
   { to: '/', label: 'ダッシュボード' },
   { to: '/philosophy', label: '人生理念' },
   { to: '/roadmap', label: 'ロードマップ' },
+  { to: '/tasks', label: '今日のタスク' },
 ]
 
 export function Layout() {
