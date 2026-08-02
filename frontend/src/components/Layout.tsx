@@ -5,6 +5,7 @@ const navItems = [
   { to: '/philosophy', label: '人生理念' },
   { to: '/roadmap', label: 'ロードマップ' },
   { to: '/tasks', label: '今日のタスク' },
+  { to: '/reflection', label: '振り返り' },
   { to: '/settings', label: '設定' },
 ]
 

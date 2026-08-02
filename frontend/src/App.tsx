@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Dashboard } from './pages/Dashboard'
 import { Philosophy } from './pages/Philosophy'
+import { ReflectionPage } from './pages/Reflection'
 import { Roadmap } from './pages/Roadmap'
 import { Settings } from './pages/Settings'
 import { TodayTasks } from './pages/TodayTasks'
@@ -14,6 +15,7 @@ function App() {
         <Route path="philosophy" element={<Philosophy />} />
         <Route path="roadmap" element={<Roadmap />} />
         <Route path="tasks" element={<TodayTasks />} />
+        <Route path="reflection" element={<ReflectionPage />} />
         <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>

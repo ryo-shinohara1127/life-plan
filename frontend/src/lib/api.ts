@@ -76,6 +76,32 @@ export type CalendarEvent = {
   end: string | null
 }
 
+export type Reflection = {
+  id: string
+  date: string
+  achieved: string | null
+  not_achieved: string | null
+  reason: string | null
+  learning: string | null
+  improvement_idea: string | null
+  mood: number | null
+  focus_level: number | null
+  sleep_hours: string | null
+  created_at: string
+}
+
+export type ReflectionInput = {
+  date: string
+  achieved?: string
+  not_achieved?: string
+  reason?: string
+  learning?: string
+  improvement_idea?: string
+  mood?: number
+  focus_level?: number
+  sleep_hours?: number
+}
+
 export const api = {
   getPhilosophyHistory: () => request<LifePhilosophy[]>('/life-philosophy'),
   createPhilosophy: (content: string) =>
@@ -125,6 +151,16 @@ export const api = {
   disconnectGoogle: () => request<void>('/auth/google/disconnect', { method: 'POST' }),
 
   getCalendarEvents: (date: string) => request<CalendarEvent[]>(`/calendar/events?date=${date}`),
+
+  getReflectionByDate: async (date: string): Promise<Reflection | null> => {
+    const res = await fetch(`${BASE_URL}/reflections/${date}`)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+    return res.json() as Promise<Reflection>
+  },
+  createReflection: (input: ReflectionInput) =>
+    request<Reflection>('/reflections', { method: 'POST', body: JSON.stringify(input) }),
+  getReflectionHistory: () => request<Reflection[]>('/reflections'),
 }
 
 export function todayISODate(): string {

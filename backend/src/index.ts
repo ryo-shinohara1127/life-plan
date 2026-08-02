@@ -7,6 +7,7 @@ import { calendarRouter } from './routes/calendar.js'
 import { categoriesRouter } from './routes/categories.js'
 import { goalsRouter } from './routes/goals.js'
 import { lifePhilosophyRouter } from './routes/lifePhilosophy.js'
+import { reflectionsRouter } from './routes/reflections.js'
 import { tasksRouter } from './routes/tasks.js'
 import { visionsRouter } from './routes/visions.js'
 
@@ -36,6 +37,7 @@ app.use('/api/categories', categoriesRouter)
 app.use('/api/tasks', tasksRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/calendar', calendarRouter)
+app.use('/api/reflections', reflectionsRouter)
 
 app.listen(port, () => {
   console.log(`backend listening on http://localhost:${port}`)
