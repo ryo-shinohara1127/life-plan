@@ -1,7 +1,68 @@
 import { useEffect, useState } from 'react'
-import { api, todayISODate, type Reflection } from '../lib/api'
+import { api, todayISODate, type AISuggestion, type Reflection } from '../lib/api'
 
 const fieldStyle: React.CSSProperties = { width: '100%', marginBottom: '1rem' }
+
+function AISuggestionPanel({ reflectionId }: { reflectionId: string }) {
+  const [suggestion, setSuggestion] = useState<AISuggestion | null | undefined>(undefined)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.getAISuggestion(reflectionId).then((existing) => {
+      if (existing) {
+        setSuggestion(existing)
+      } else {
+        setAnalyzing(true)
+        api
+          .analyzeReflection(reflectionId)
+          .then(setSuggestion)
+          .catch((err) => setError((err as Error).message))
+          .finally(() => setAnalyzing(false))
+      }
+    })
+  }, [reflectionId])
+
+  if (error) {
+    return (
+      <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #833', borderRadius: 8 }}>
+        <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>AI分析</h3>
+        <p style={{ color: '#f87171' }}>分析に失敗しました：{error}</p>
+      </div>
+    )
+  }
+
+  if (suggestion === undefined || analyzing) {
+    return (
+      <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
+        <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>AI分析</h3>
+        <p style={{ color: '#888' }}>分析中...</p>
+      </div>
+    )
+  }
+
+  if (!suggestion) return null
+
+  return (
+    <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
+      <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>AI分析</h3>
+      <p><strong>今日の要約：</strong>{suggestion.summary}</p>
+      {suggestion.issues && <p><strong>課題：</strong>{suggestion.issues}</p>}
+      {suggestion.hypothesis && <p><strong>原因の仮説：</strong>{suggestion.hypothesis}</p>}
+      {suggestion.improvements.length > 0 && (
+        <div>
+          <strong>明日の改善案：</strong>
+          <ul>
+            {suggestion.improvements.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {suggestion.continue_items && <p><strong>継続すべきこと：</strong>{suggestion.continue_items}</p>}
+    </div>
+  )
+}
 
 export function ReflectionPage() {
   const date = todayISODate()
@@ -58,6 +119,8 @@ export function ReflectionPage() {
           <p><strong>改善案：</strong>{existing.improvement_idea || '（未記入）'}</p>
           <p><strong>気分：</strong>{existing.mood ?? '-'} / 5　<strong>集中度：</strong>{existing.focus_level ?? '-'} / 5　<strong>睡眠：</strong>{existing.sleep_hours ?? '-'}時間</p>
         </div>
+
+        <AISuggestionPanel reflectionId={existing.id} />
       </div>
     )
   }

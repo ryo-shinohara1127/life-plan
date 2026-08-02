@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { getAIProvider } from '../ai/index.js'
 import { pool } from '../db.js'
 
 export const reflectionsRouter = Router()
@@ -69,4 +70,63 @@ reflectionsRouter.post('/', async (req, res) => {
     ],
   )
   res.status(201).json(result.rows[0])
+})
+
+reflectionsRouter.get('/:id/ai-suggestion', async (req, res) => {
+  const result = await pool.query('select * from ai_suggestions where reflection_id = $1', [req.params.id])
+  if (result.rows.length === 0) {
+    res.status(404).json({ message: 'not found' })
+    return
+  }
+  res.json(result.rows[0])
+})
+
+reflectionsRouter.post('/:id/analyze', async (req, res) => {
+  const reflectionResult = await pool.query('select * from reflections where id = $1', [req.params.id])
+  if (reflectionResult.rows.length === 0) {
+    res.status(404).json({ message: 'reflection not found' })
+    return
+  }
+  const reflection = reflectionResult.rows[0]
+
+  const existing = await pool.query('select * from ai_suggestions where reflection_id = $1', [req.params.id])
+  if (existing.rows.length > 0) {
+    res.json(existing.rows[0])
+    return
+  }
+
+  try {
+    const ai = getAIProvider()
+    const analysis = await ai.analyzeReflection({
+      date: reflection.date,
+      achieved: reflection.achieved,
+      notAchieved: reflection.not_achieved,
+      reason: reflection.reason,
+      learning: reflection.learning,
+      improvementIdea: reflection.improvement_idea,
+      mood: reflection.mood,
+      focusLevel: reflection.focus_level,
+      sleepHours: reflection.sleep_hours ? Number(reflection.sleep_hours) : null,
+    })
+
+    const saved = await pool.query(
+      `insert into ai_suggestions
+        (reflection_id, summary, issues, hypothesis, improvements, continue_items, ai_provider)
+       values ($1, $2, $3, $4, $5, $6, $7)
+       returning *`,
+      [
+        req.params.id,
+        analysis.summary,
+        analysis.issues,
+        analysis.hypothesis,
+        JSON.stringify(analysis.improvements),
+        analysis.continueItems,
+        process.env.AI_PROVIDER ?? 'claude',
+      ],
+    )
+    res.status(201).json(saved.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: (err as Error).message })
+  }
 })

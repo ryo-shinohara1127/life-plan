@@ -102,6 +102,18 @@ export type ReflectionInput = {
   sleep_hours?: number
 }
 
+export type AISuggestion = {
+  id: string
+  reflection_id: string
+  summary: string
+  issues: string | null
+  hypothesis: string | null
+  improvements: string[]
+  continue_items: string | null
+  ai_provider: string
+  created_at: string
+}
+
 export const api = {
   getPhilosophyHistory: () => request<LifePhilosophy[]>('/life-philosophy'),
   createPhilosophy: (content: string) =>
@@ -161,6 +173,15 @@ export const api = {
   createReflection: (input: ReflectionInput) =>
     request<Reflection>('/reflections', { method: 'POST', body: JSON.stringify(input) }),
   getReflectionHistory: () => request<Reflection[]>('/reflections'),
+
+  analyzeReflection: (reflectionId: string) =>
+    request<AISuggestion>(`/reflections/${reflectionId}/analyze`, { method: 'POST' }),
+  getAISuggestion: async (reflectionId: string): Promise<AISuggestion | null> => {
+    const res = await fetch(`${BASE_URL}/reflections/${reflectionId}/ai-suggestion`)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+    return res.json() as Promise<AISuggestion>
+  },
 }
 
 export function todayISODate(): string {
