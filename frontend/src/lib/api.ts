@@ -1,4 +1,6 @@
-const BASE_URL = '/api'
+// 開発時はViteのproxy経由で相対パス"/api"を使う。本番はビルド時にVITE_API_URLを設定し、
+// デプロイ先バックエンドの絶対URL（例: https://xxxx.onrender.com/api）を使う。
+const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {

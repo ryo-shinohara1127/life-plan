@@ -16,7 +16,8 @@ export function Settings() {
   useEffect(load, [])
 
   const connect = () => {
-    window.location.href = '/api/auth/google'
+    const apiBase = import.meta.env.VITE_API_URL ?? '/api'
+    window.location.href = `${apiBase}/auth/google`
   }
 
   const disconnect = async () => {

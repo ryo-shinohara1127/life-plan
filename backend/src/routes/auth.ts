@@ -15,10 +15,10 @@ authRouter.get('/google/callback', async (req, res) => {
   }
   try {
     await saveTokensFromCode(code)
-    res.redirect('http://localhost:5173/settings?connected=1')
+    res.redirect(`${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/settings?connected=1`)
   } catch (err) {
     console.error(err)
-    res.redirect('http://localhost:5173/settings?error=1')
+    res.redirect(`${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/settings?error=1`)
   }
 })
 
