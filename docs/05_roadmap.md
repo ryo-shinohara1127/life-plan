@@ -70,13 +70,17 @@ AIをプロダクトの中核機能として実装する（詳細は[要件定�
 **MVP外（Phase 8以降）**：週間目標と日々の行動のズレ検知、長期目標からの逸脱警告、
 過去傾向の分析、タスクへの自動分解、ロードマップの自動再構築。
 
-## Phase 7：MVP統合・運用開始（進行中）
+## Phase 7：MVP統合・運用開始 ✅完了
 
 - [x] Phase 1〜6の結合テスト（1日通しての実運用フロー確認）
 - [x] README・仕様書の最終更新
-- [ ] 本番デプロイ（Vercel / Render）— アカウント作成はユーザー本人が行う
+- [x] 本番デプロイ（Vercel / Render）
+  - バックエンド：Render（Free） https://life-plan-backend.onrender.com
+  - フロントエンド：Vercel https://life-plan-ecru.vercel.app
+  - DB：Supabase（開発時と共通）
+  - Google OAuthクライアントに本番リダイレクトURIを追加登録済み
 
-ここで一度運用を開始する。
+**MVP完成。ここから運用を開始する。**
 
 ## Phase 8以降（運用しながらの拡張候補）
 

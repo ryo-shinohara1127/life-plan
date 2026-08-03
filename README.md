@@ -55,6 +55,11 @@ npm install
 npm run dev
 ```
 
+## 本番環境
+
+- フロントエンド：https://life-plan-ecru.vercel.app
+- バックエンド：https://life-plan-backend.onrender.com （Render Free、非アクセス時はスリープします）
+
 ## ステータス
 
-MVP設計（Phase 0〜6）完了。現在Phase 7（統合テスト・本番デプロイ）を進行中。
+MVP（Phase 0〜7）完成。運用開始。
