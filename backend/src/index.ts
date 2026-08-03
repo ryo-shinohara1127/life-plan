@@ -4,6 +4,7 @@ import express from 'express'
 import { pool } from './db.js'
 import { authRouter } from './routes/auth.js'
 import { calendarRouter } from './routes/calendar.js'
+import { calendarProposalsRouter } from './routes/calendarProposals.js'
 import { categoriesRouter } from './routes/categories.js'
 import { goalsRouter } from './routes/goals.js'
 import { lifePhilosophyRouter } from './routes/lifePhilosophy.js'
@@ -38,6 +39,7 @@ app.use('/api/tasks', tasksRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/calendar', calendarRouter)
 app.use('/api/reflections', reflectionsRouter)
+app.use('/api/calendar-proposals', calendarProposalsRouter)
 
 app.listen(port, () => {
   console.log(`backend listening on http://localhost:${port}`)

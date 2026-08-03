@@ -182,6 +182,7 @@ reflections (毎日の振り返り) ── 1:1 ── ai_suggestions (振り返�
 |---|---|---|
 | id | uuid (PK) | |
 | ai_suggestion_id | uuid (FK → ai_suggestions.id) | どの振り返り分析から生まれた提案か |
+| task_id | uuid (FK → tasks.id, nullable) | 変更対象のタスク（既存タスクの時間変更の場合） |
 | description | text | 提案内容の説明（人が読む用） |
 | proposed_change | jsonb | 変更内容の構造化データ（対象イベント・日時・種別など） |
 | reason | text | AIがこの変更を提案する理由 |
@@ -195,7 +196,9 @@ reflections (毎日の振り返り) ── 1:1 ── ai_suggestions (振り返�
 > 別々のタイミングの出来事として記録できるようにしている。`status`が`rejected`のまま
 > 残る、という要件（却下した結果も記録する）もこの設計で満たせる。AIはこのテーブルに
 > レコードを作るところまでしか行わず、`google_calendar_links`や実際のカレンダーへの
-> 書き込みは、ユーザーが承認した後にバックエンドが行う。
+> 書き込みは、ユーザーが承認した後にバックエンドが行う。`task_id`を持たせているのは、
+> 「どのタスクの時間を動かす提案か」を明確にし、承認時に`tasks`テーブルと
+> `google_calendar_links`を迷わず更新できるようにするため。
 
 ## 3. インデックス方針（初期案）
 

@@ -18,6 +18,15 @@ export type DailyAnalysisResult = {
   continueItems: string
 }
 
+export type CalendarChangeProposal = {
+  title: string
+  description: string
+  reason: string
+  date: string // YYYY-MM-DD
+  startTime: string // HH:MM
+  endTime: string // HH:MM
+}
+
 /**
  * AIモデルを差し替え可能にするための共通インターフェース。
  * 実装は backend/src/ai/ClaudeProvider.ts など。
@@ -25,4 +34,12 @@ export type DailyAnalysisResult = {
  */
 export interface AIProvider {
   analyzeReflection(input: ReflectionInputForAI): Promise<DailyAnalysisResult>
+
+  /**
+   * 振り返りをもとに、翌日のカレンダーへの変更案を作成する（提案のみ、反映はしない）。
+   * ユーザーが個別に承認した場合のみ、呼び出し側がGoogleカレンダーへ反映する。
+   */
+  proposeCalendarChanges(
+    input: ReflectionInputForAI & { tomorrowDate: string },
+  ): Promise<CalendarChangeProposal[]>
 }

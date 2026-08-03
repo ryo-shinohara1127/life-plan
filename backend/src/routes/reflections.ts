@@ -4,6 +4,15 @@ import { pool } from '../db.js'
 
 export const reflectionsRouter = Router()
 
+function nextDateISO(date: string): string {
+  const d = new Date(`${date}T00:00:00`)
+  d.setDate(d.getDate() + 1)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 reflectionsRouter.get('/', async (_req, res) => {
   const result = await pool.query('select * from reflections order by date desc')
   res.json(result.rows)
@@ -113,6 +122,7 @@ reflectionsRouter.post('/:id/analyze', async (req, res) => {
       `insert into ai_suggestions
         (reflection_id, summary, issues, hypothesis, improvements, continue_items, ai_provider)
        values ($1, $2, $3, $4, $5, $6, $7)
+       on conflict (reflection_id) do nothing
        returning *`,
       [
         req.params.id,
@@ -124,9 +134,62 @@ reflectionsRouter.post('/:id/analyze', async (req, res) => {
         process.env.AI_PROVIDER ?? 'claude',
       ],
     )
-    res.status(201).json(saved.rows[0])
+
+    if (saved.rows.length === 0) {
+      // 同時に別のリクエストが先にAI分析を保存済み（レースコンディション）。
+      // 重複生成はせず、既存のものをそのまま返す。
+      const already = await pool.query('select * from ai_suggestions where reflection_id = $1', [req.params.id])
+      res.json(already.rows[0])
+      return
+    }
+    const aiSuggestion = saved.rows[0]
+
+    try {
+      const proposals = await ai.proposeCalendarChanges({
+        date: reflection.date,
+        achieved: reflection.achieved,
+        notAchieved: reflection.not_achieved,
+        reason: reflection.reason,
+        learning: reflection.learning,
+        improvementIdea: reflection.improvement_idea,
+        mood: reflection.mood,
+        focusLevel: reflection.focus_level,
+        sleepHours: reflection.sleep_hours ? Number(reflection.sleep_hours) : null,
+        tomorrowDate: nextDateISO(reflection.date),
+      })
+
+      for (const p of proposals) {
+        await pool.query(
+          `insert into ai_calendar_proposals
+            (ai_suggestion_id, description, proposed_change, reason)
+           values ($1, $2, $3, $4)`,
+          [
+            aiSuggestion.id,
+            p.description,
+            JSON.stringify({ title: p.title, date: p.date, startTime: p.startTime, endTime: p.endTime }),
+            p.reason,
+          ],
+        )
+      }
+    } catch (err) {
+      // カレンダー変更案の生成に失敗しても、要約・改善案自体は保存済みなので致命的にしない
+      console.error('failed to generate calendar proposals', err)
+    }
+
+    res.status(201).json(aiSuggestion)
   } catch (err) {
     console.error(err)
     res.status(500).json({ message: (err as Error).message })
   }
+})
+
+reflectionsRouter.get('/:id/calendar-proposals', async (req, res) => {
+  const result = await pool.query(
+    `select acp.* from ai_calendar_proposals acp
+     join ai_suggestions s on acp.ai_suggestion_id = s.id
+     where s.reflection_id = $1
+     order by acp.created_at asc`,
+    [req.params.id],
+  )
+  res.json(result.rows)
 })

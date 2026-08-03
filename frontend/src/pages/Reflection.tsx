@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
-import { api, todayISODate, type AISuggestion, type Reflection } from '../lib/api'
+import { api, todayISODate, type AISuggestion, type CalendarProposal, type Reflection } from '../lib/api'
 
 const fieldStyle: React.CSSProperties = { width: '100%', marginBottom: '1rem' }
 
-function AISuggestionPanel({ reflectionId }: { reflectionId: string }) {
+function AISuggestionPanel({
+  reflectionId,
+  onReady,
+}: {
+  reflectionId: string
+  onReady: () => void
+}) {
   const [suggestion, setSuggestion] = useState<AISuggestion | null | undefined>(undefined)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -12,15 +18,20 @@ function AISuggestionPanel({ reflectionId }: { reflectionId: string }) {
     api.getAISuggestion(reflectionId).then((existing) => {
       if (existing) {
         setSuggestion(existing)
+        onReady()
       } else {
         setAnalyzing(true)
         api
           .analyzeReflection(reflectionId)
-          .then(setSuggestion)
+          .then((s) => {
+            setSuggestion(s)
+            onReady()
+          })
           .catch((err) => setError((err as Error).message))
           .finally(() => setAnalyzing(false))
       }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reflectionId])
 
   if (error) {
@@ -64,10 +75,91 @@ function AISuggestionPanel({ reflectionId }: { reflectionId: string }) {
   )
 }
 
+const proposalStatusLabel: Record<CalendarProposal['status'], string> = {
+  proposed: '未対応',
+  approved: '✅ 承認済み（カレンダーに反映済み）',
+  rejected: '却下済み',
+}
+
+function CalendarProposalsPanel({ reflectionId }: { reflectionId: string }) {
+  const [proposals, setProposals] = useState<CalendarProposal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const load = () => {
+    api.getCalendarProposals(reflectionId).then((p) => {
+      setProposals(p)
+      setLoading(false)
+    })
+  }
+
+  useEffect(load, [reflectionId])
+
+  const approve = async (id: string) => {
+    setBusyId(id)
+    try {
+      await api.approveCalendarProposal(id)
+      load()
+    } catch (err) {
+      alert((err as Error).message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const reject = async (id: string) => {
+    setBusyId(id)
+    try {
+      await api.rejectCalendarProposal(id)
+      load()
+    } catch (err) {
+      alert((err as Error).message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (loading) return null
+  if (proposals.length === 0) return null
+
+  return (
+    <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
+      <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>カレンダー変更案</h3>
+      {proposals.map((p) => (
+        <div
+          key={p.id}
+          style={{ padding: '0.75rem', border: '1px solid #444', borderRadius: 6, marginBottom: '0.75rem' }}
+        >
+          <p style={{ margin: '0 0 0.25rem', fontWeight: 'bold' }}>
+            {p.proposed_change.date} {p.proposed_change.startTime}-{p.proposed_change.endTime} {p.proposed_change.title}
+          </p>
+          <p style={{ margin: '0 0 0.25rem', color: '#ccc' }}>{p.description}</p>
+          {p.reason && <p style={{ margin: '0 0 0.5rem', color: '#888', fontSize: '0.85rem' }}>理由：{p.reason}</p>}
+          {p.status === 'proposed' ? (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => approve(p.id)} disabled={busyId === p.id}>
+                承認する
+              </button>
+              <button onClick={() => reject(p.id)} disabled={busyId === p.id}>
+                却下する
+              </button>
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: '0.85rem', color: p.status === 'approved' ? '#4ade80' : '#888' }}>
+              {proposalStatusLabel[p.status]}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function ReflectionPage() {
   const date = todayISODate()
   const [existing, setExisting] = useState<Reflection | null | undefined>(undefined)
   const [saving, setSaving] = useState(false)
+  const [suggestionReady, setSuggestionReady] = useState(false)
 
   const [achieved, setAchieved] = useState('')
   const [notAchieved, setNotAchieved] = useState('')
@@ -120,7 +212,8 @@ export function ReflectionPage() {
           <p><strong>気分：</strong>{existing.mood ?? '-'} / 5　<strong>集中度：</strong>{existing.focus_level ?? '-'} / 5　<strong>睡眠：</strong>{existing.sleep_hours ?? '-'}時間</p>
         </div>
 
-        <AISuggestionPanel reflectionId={existing.id} />
+        <AISuggestionPanel reflectionId={existing.id} onReady={() => setSuggestionReady(true)} />
+        {suggestionReady && <CalendarProposalsPanel reflectionId={existing.id} />}
       </div>
     )
   }

@@ -1,6 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { AIProvider, DailyAnalysisResult, ReflectionInputForAI } from './AIProvider.js'
+import type {
+  AIProvider,
+  CalendarChangeProposal,
+  DailyAnalysisResult,
+  ReflectionInputForAI,
+} from './AIProvider.js'
+import { buildCalendarChangeProposalPrompt } from './prompts/calendarChangeProposal.js'
 import { buildDailySummaryPrompt } from './prompts/dailySummary.js'
+
+const MODEL_NAME = 'gemini-flash-latest'
 
 export class GeminiProvider implements AIProvider {
   private client: GoogleGenerativeAI
@@ -9,17 +17,17 @@ export class GeminiProvider implements AIProvider {
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '')
   }
 
-  async analyzeReflection(input: ReflectionInputForAI): Promise<DailyAnalysisResult> {
-    const prompt = buildDailySummaryPrompt(input)
-
+  private async complete(prompt: string): Promise<string> {
     const model = this.client.getGenerativeModel({
-      model: 'gemini-flash-latest',
+      model: MODEL_NAME,
       generationConfig: { responseMimeType: 'application/json' },
     })
-
     const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    return result.response.text()
+  }
 
+  async analyzeReflection(input: ReflectionInputForAI): Promise<DailyAnalysisResult> {
+    const text = await this.complete(buildDailySummaryPrompt(input))
     const parsed = JSON.parse(text) as DailyAnalysisResult
     return {
       summary: parsed.summary,
@@ -28,5 +36,13 @@ export class GeminiProvider implements AIProvider {
       improvements: (parsed.improvements ?? []).slice(0, 3),
       continueItems: parsed.continueItems,
     }
+  }
+
+  async proposeCalendarChanges(
+    input: ReflectionInputForAI & { tomorrowDate: string },
+  ): Promise<CalendarChangeProposal[]> {
+    const text = await this.complete(buildCalendarChangeProposalPrompt(input))
+    const parsed = JSON.parse(text) as CalendarChangeProposal[]
+    return parsed.slice(0, 2)
   }
 }

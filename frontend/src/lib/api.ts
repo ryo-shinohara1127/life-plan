@@ -114,6 +114,19 @@ export type AISuggestion = {
   created_at: string
 }
 
+export type CalendarProposalStatus = 'proposed' | 'approved' | 'rejected'
+
+export type CalendarProposal = {
+  id: string
+  ai_suggestion_id: string
+  description: string
+  proposed_change: { title: string; date: string; startTime: string; endTime: string }
+  reason: string | null
+  status: CalendarProposalStatus
+  reviewed_at: string | null
+  applied_at: string | null
+}
+
 export const api = {
   getPhilosophyHistory: () => request<LifePhilosophy[]>('/life-philosophy'),
   createPhilosophy: (content: string) =>
@@ -182,6 +195,13 @@ export const api = {
     if (!res.ok) throw new Error(`Request failed: ${res.status}`)
     return res.json() as Promise<AISuggestion>
   },
+
+  getCalendarProposals: (reflectionId: string) =>
+    request<CalendarProposal[]>(`/reflections/${reflectionId}/calendar-proposals`),
+  approveCalendarProposal: (id: string) =>
+    request<CalendarProposal>(`/calendar-proposals/${id}/approve`, { method: 'POST' }),
+  rejectCalendarProposal: (id: string) =>
+    request<CalendarProposal>(`/calendar-proposals/${id}/reject`, { method: 'POST' }),
 }
 
 export function todayISODate(): string {
