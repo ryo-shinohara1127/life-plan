@@ -12,8 +12,11 @@ export async function listEventsForDate(date: string): Promise<CalendarEvent[]> 
   const auth = await getAuthorizedClient()
   const calendar = google.calendar({ version: 'v3', auth })
 
-  const timeMin = new Date(`${date}T00:00:00`).toISOString()
-  const timeMax = new Date(`${date}T23:59:59`).toISOString()
+  // サーバーのタイムゾーンに依存しないよう、日本時間(+09:00)を明示する。
+  // 本番(Render)はサーバーがUTCで動くため、これがないと朝の予定が漏れたり
+  // 翌日の予定が混ざったりする。
+  const timeMin = new Date(`${date}T00:00:00+09:00`).toISOString()
+  const timeMax = new Date(`${date}T23:59:59+09:00`).toISOString()
 
   const res = await calendar.events.list({
     calendarId: 'primary',
