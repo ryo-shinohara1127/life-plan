@@ -37,15 +37,6 @@ export function TodayTasks() {
 
   useEffect(load, [date])
 
-  const generateRoutine = async () => {
-    try {
-      await api.generateRoutine(date)
-      load()
-    } catch (err) {
-      alert((err as Error).message)
-    }
-  }
-
   const cycleStatus = async (task: Task) => {
     const next: Record<TaskStatus, TaskStatus> = {
       not_started: 'done',
@@ -87,12 +78,6 @@ export function TodayTasks() {
         {date}（完了 {doneCount} / {tasks.length}）
       </p>
 
-      {tasks.length === 0 && (
-        <button onClick={generateRoutine} style={{ marginBottom: '1rem' }}>
-          今日のルーティンを生成する
-        </button>
-      )}
-
       {calendarEvents && (
         <div style={{ margin: '1rem 0', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
           <h3 style={{ marginTop: 0, fontSize: '0.9rem' }}>Googleカレンダーの予定</h3>
@@ -131,10 +116,6 @@ export function TodayTasks() {
                 checked={task.status === 'done'}
                 onChange={() => cycleStatus(task)}
               />
-              <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                {task.planned_start_time?.slice(0, 5)}
-                {task.planned_end_time && `-${task.planned_end_time.slice(0, 5)}`}
-              </span>
               {category && <span style={{ fontSize: '0.75rem', color: '#4ade80' }}>[{category.name}]</span>}
               <span
                 style={{
