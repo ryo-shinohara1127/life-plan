@@ -119,8 +119,9 @@ export function TodayTasks() {
               key={task.id}
               style={{
                 display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                gap: '0.75rem',
+                gap: '0.5rem 0.75rem',
                 padding: '0.5rem 0',
                 borderBottom: '1px solid #333',
               }}
@@ -130,14 +131,15 @@ export function TodayTasks() {
                 checked={task.status === 'done'}
                 onChange={() => cycleStatus(task)}
               />
-              <span style={{ fontSize: '0.8rem', color: '#888', width: 100 }}>
+              <span style={{ fontSize: '0.8rem', color: '#888' }}>
                 {task.planned_start_time?.slice(0, 5)}
                 {task.planned_end_time && `-${task.planned_end_time.slice(0, 5)}`}
               </span>
               {category && <span style={{ fontSize: '0.75rem', color: '#4ade80' }}>[{category.name}]</span>}
               <span
                 style={{
-                  flex: 1,
+                  flex: '1 1 120px',
+                  minWidth: 0,
                   textDecoration: task.status === 'done' ? 'line-through' : 'none',
                   color: task.status === 'done' ? '#888' : 'inherit',
                 }}

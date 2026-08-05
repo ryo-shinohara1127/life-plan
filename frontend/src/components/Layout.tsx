@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import './Layout.css'
 
 const navItems = [
   { to: '/', label: 'ダッシュボード' },
@@ -10,36 +12,60 @@ const navItems = [
 ]
 
 export function Layout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   return (
-    <div style={{ fontFamily: 'sans-serif', minHeight: '100vh', display: 'flex' }}>
-      <nav
-        style={{
-          width: 200,
-          borderRight: '1px solid #333',
-          padding: '1.5rem 1rem',
-          flexShrink: 0,
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>人生設計図</h2>
-        <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+    <div className="app-shell" style={{ fontFamily: 'sans-serif' }}>
+      <header className="app-topbar">
+        <button
+          type="button"
+          className="menu-toggle"
+          aria-label="メニューを開く"
+          onClick={() => setMenuOpen(true)}
+        >
+          ☰
+        </button>
+        <h2>人生設計図</h2>
+      </header>
+
+      {menuOpen && <div className="app-backdrop" onClick={() => setMenuOpen(false)} />}
+
+      <nav className={menuOpen ? 'app-nav open' : 'app-nav'}>
+        <div className="app-nav-header">
+          <h2>人生設計図</h2>
+          <button
+            type="button"
+            className="menu-close"
+            aria-label="メニューを閉じる"
+            onClick={() => setMenuOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+        <ul>
           {navItems.map((item) => (
             <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                style={({ isActive }) => ({
-                  textDecoration: 'none',
-                  color: isActive ? '#4ade80' : 'inherit',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                })}
-              >
+              <NavLink to={item.to} end={item.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>
                 {item.label}
               </NavLink>
             </li>
           ))}
         </ul>
       </nav>
-      <main style={{ flex: 1, padding: '2rem' }}>
+
+      <main className="app-main">
         <Outlet />
       </main>
     </div>

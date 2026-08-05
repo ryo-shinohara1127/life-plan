@@ -44,11 +44,11 @@ function GoalNode({
 
   return (
     <div style={{ marginLeft: '1.25rem', borderLeft: '1px solid #333', paddingLeft: '1rem', marginTop: '0.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
         <input type="checkbox" checked={goal.status === 'done'} onChange={toggleDone} />
-        <span style={{ fontSize: '0.75rem', color: '#4ade80' }}>{levelLabel[goal.level]}</span>
-        {category && <span style={{ fontSize: '0.75rem', color: '#888' }}>[{category.name}]</span>}
-        <strong style={{ textDecoration: goal.status === 'done' ? 'line-through' : 'none' }}>
+        <span style={{ fontSize: '0.75rem', color: '#4ade80', whiteSpace: 'nowrap' }}>{levelLabel[goal.level]}</span>
+        {category && <span style={{ fontSize: '0.75rem', color: '#888', whiteSpace: 'nowrap' }}>[{category.name}]</span>}
+        <strong style={{ flex: '1 1 120px', minWidth: 0, textDecoration: goal.status === 'done' ? 'line-through' : 'none' }}>
           {goal.title}
         </strong>
         {canHaveChildren && (
@@ -148,23 +148,25 @@ export function Roadmap() {
 
       <div style={{ margin: '1.5rem 0', padding: '1rem', border: '1px solid #333', borderRadius: 8 }}>
         <h3 style={{ marginTop: 0, fontSize: '0.95rem' }}>新しい人物像を追加</h3>
-        <input
-          type="text"
-          placeholder="3〜5年後、どんな人になっていたいか"
-          value={newVisionContent}
-          onChange={(e) => setNewVisionContent(e.target.value)}
-          style={{ width: '70%', marginRight: '0.5rem' }}
-        />
-        <input
-          type="number"
-          placeholder="目標年（例:2030）"
-          value={newVisionYear}
-          onChange={(e) => setNewVisionYear(e.target.value)}
-          style={{ width: '120px', marginRight: '0.5rem' }}
-        />
-        <button onClick={addVision} disabled={!newVisionContent.trim()}>
-          追加
-        </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <input
+            type="text"
+            placeholder="3〜5年後、どんな人になっていたいか"
+            value={newVisionContent}
+            onChange={(e) => setNewVisionContent(e.target.value)}
+            style={{ flex: '1 1 200px', minWidth: 0, boxSizing: 'border-box' }}
+          />
+          <input
+            type="number"
+            placeholder="目標年（例:2030）"
+            value={newVisionYear}
+            onChange={(e) => setNewVisionYear(e.target.value)}
+            style={{ flex: '0 1 120px', minWidth: 0, boxSizing: 'border-box' }}
+          />
+          <button onClick={addVision} disabled={!newVisionContent.trim()}>
+            追加
+          </button>
+        </div>
       </div>
 
       {visions.map((vision) => (
@@ -200,9 +202,11 @@ export function Roadmap() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            padding: '1rem',
+            boxSizing: 'border-box',
           }}
         >
-          <div style={{ background: '#1a1a1a', padding: '1.5rem', borderRadius: 8, width: 400 }}>
+          <div style={{ background: '#1a1a1a', padding: '1.5rem', borderRadius: 8, width: '100%', maxWidth: 400, boxSizing: 'border-box' }}>
             <h3 style={{ marginTop: 0 }}>
               {formTarget.kind === 'vision'
                 ? '1年目標を追加'
